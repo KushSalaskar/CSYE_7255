@@ -46,7 +46,6 @@ export const deletePlan = async (req, resp) => {
         //     errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
         //     return
         // }
-        console.log("Be")
         const isDeleted = await planService.deletePlanService(id)
         console.log(isDeleted)
         if (!isDeleted) {
