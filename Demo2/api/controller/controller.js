@@ -1,6 +1,5 @@
 import * as planService from "../services/services.js"
 import Ajv from "ajv"
-import fetch from "node-fetch"
 import { planSchema } from "../schema.js"
 
 const ajv = new Ajv()
@@ -64,7 +63,7 @@ export const deletePlan = async (req, resp) => {
             isDeleted = await planService.deletePlanService(id)
         }
         if (!isDeleted) {
-            errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
+            errorHandler("Something went wrong", resp, 500)
             return
         }
         
