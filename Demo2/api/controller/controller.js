@@ -17,6 +17,7 @@ const setSuccessResponse = (data, res, etag, successCode=200) => {
     res.json(data);
 }
 
+//GET Controller
 export const getPlan = async (req, resp) => {
     try {
        const id = `${req.params.id}`
@@ -41,6 +42,7 @@ export const getPlan = async (req, resp) => {
     }
 }
 
+//DELETE Controller
 export const deletePlan = async (req, resp) => {
     try {
         const id = `${req.params.id}`
@@ -66,7 +68,6 @@ export const deletePlan = async (req, resp) => {
             errorHandler("Something went wrong", resp, 500)
             return
         }
-        
         setSuccessResponse(`Plan ${id} successfully deleted`, resp, 204) 
     } catch (error) {
         console.log(error.message)
@@ -74,6 +75,7 @@ export const deletePlan = async (req, resp) => {
     }
 }
 
+//POST Controller
 export const savePlan = async (req, resp) => {
     try{
         if (req.body === "{}" || JSON.stringify(req.body) === "{}") {
