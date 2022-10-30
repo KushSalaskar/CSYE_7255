@@ -34,20 +34,21 @@ export const getPlan = async (req, resp) => {
 export const deletePlan = async (req, resp) => {
     try {
         const id = `${req.params.id}`
-        console.log(id)
-        // const getResp = await fetch(`http://localhost:5001/getPlan/${id}`)
-        // const etag = getResp.headers.get('etag')
+        const getResp = await fetch(`http://localhost:5001/getPlan/${id}`)
+        const etag = getResp.headers.get('etag')
         
-        // let isDeleted = false
-        // if (req.headers['if-match'] === etag) {
-        //     isDeleted = await planService.deletePlanService(id)
-        // }
-        // if (!isDeleted) {
-        //     errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
-        //     return
-        // }
-        const isDeleted = await planService.deletePlanService(id)
-        console.log(isDeleted)
+        let isDeleted = false
+        if (req.headers['if-match'] === undefined) {
+            errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
+            return
+        }
+        if (req.headers['if-match'] !== etag) {
+            errorHandler("A requested precondition failed", resp, 412)
+            return
+        } 
+        if (req.headers['if-match'] === etag) {
+            isDeleted = await planService.deletePlanService(id)
+        }
         if (!isDeleted) {
             errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
             return

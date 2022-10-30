@@ -2,7 +2,7 @@ import express from "express"
 import routes from "./api/routes/index.js"
 import cookieParser from "cookie-parser"
 import cors from "cors"
-import preconditions from "express-preconditions"
+// import preconditions from "express-preconditions"
 
 const PORT = process.env.PORT || 5001;
 
@@ -12,7 +12,7 @@ app.use(express.json())
 app.set("etag", "strong")
 app.use(cookieParser())
 app.use(cors())
-app.use(preconditions())
+// app.use(preconditions())
 
 routes(app)
 
