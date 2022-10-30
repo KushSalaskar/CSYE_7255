@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 5001;
 const app = express()
 //Node js handles etags logic on its own
 app.use(express.json())
-app.set("etag", "strong")
+app.set("etag", false)
 app.use(cookieParser())
 app.use(cors())
 // app.use(preconditions())

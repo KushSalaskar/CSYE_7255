@@ -12,20 +12,26 @@ const errorHandler = (message, res, errCode=400) => {
 }
 
 //method to execute when exec is successfull
-const setSuccessResponse = (data, res, successCode=200) => {
+const setSuccessResponse = (data, res, etag, successCode=200) => {
     res.status(successCode);
+    res.set({"Etag": etag})
     res.json(data);
 }
 
 export const getPlan = async (req, resp) => {
     try {
        const id = `${req.params.id}`
-       const plan = await planService.getPlanService(id)
+       const [plan, etag] = await planService.getPlanService(id)
+       
+       if (req.headers['if-none-match'] !== undefined && req.headers['if-none-match'] === etag) {
+            setSuccessResponse("Not Modified", resp, etag, 304)
+            return
+       }
        if (!plan) {
             errorHandler("No plans found with the corresponding ObjectId", resp, 404)
             return
        }
-       setSuccessResponse(JSON.parse(plan), resp) 
+       setSuccessResponse(JSON.parse(plan), resp, etag) 
     } catch (error) {
         errorHandler(error.message, resp)
     }
@@ -34,9 +40,7 @@ export const getPlan = async (req, resp) => {
 export const deletePlan = async (req, resp) => {
     try {
         const id = `${req.params.id}`
-        const getResp = await fetch(`http://localhost:5001/getPlan/${id}`)
-        const etag = getResp.headers.get('etag')
-        
+        const [plan, etag] = await planService.getPlanService(id) 
         let isDeleted = false
         if (req.headers['if-match'] === undefined) {
             errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
@@ -78,9 +82,11 @@ export const savePlan = async (req, resp) => {
             errorHandler(`The Plan with objectId ${objectId} already exists`, resp, 409)
             return
         }
-        const respObjectId = await planService.savePlanService(objectId, req.body) 
+        const plan = JSON.stringify(req.body)
+        const etag = planService.createEtag(plan)
+        const respObjectId = await planService.savePlanService(objectId, plan, etag) 
         if (respObjectId !== null){
-            setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully added`, resp, 201)
+            setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully added`, resp, etag, 201)
         } else {
             errorHandler("Something went wrong", resp)
         }
