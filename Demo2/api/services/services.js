@@ -61,7 +61,8 @@ export const deletePlanService = async (objectId) => {
             return false
         }
         const deleted = await client.del(objectId)
-        return deleted
+        const deleted_etag = await client.del(objectId + "_etag")
+        return deleted && deleted_etag
     } catch (error) {
         console.log(error)
     }
@@ -69,8 +70,8 @@ export const deletePlanService = async (objectId) => {
 
 export const savePlanService = async (objectId, plan, etag) => {
     try {
-        client.set(objectId, plan)
-        client.set(objectId + "_etag", etag)
+        await client.set(objectId, plan)
+        await client.set(objectId + "_etag", etag)
         return objectId
     } catch (error) {
         console.log(error)        
