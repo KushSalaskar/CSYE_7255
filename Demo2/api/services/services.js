@@ -27,6 +27,19 @@ export const checkIfPlanExistsService = async(objectId) => {
     }
 }
 
+export const getPlanEtag = async(objectId) => {
+    try {
+        const exists = await checkIfPlanExistsService(objectId + "_etag")
+        if (!exists) {
+            return false
+        }
+        const etag = await client.get(objectId + "_etag")
+        return etag 
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 export const getPlanService = async (objectId) => {
     try {
         const exists =  await checkIfPlanExistsService(objectId)
@@ -48,7 +61,6 @@ export const deletePlanService = async (objectId) => {
             return false
         }
         const deleted = await client.del(objectId)
-        await client.del(objectId + "_etag")
         return deleted
     } catch (error) {
         console.log(error)

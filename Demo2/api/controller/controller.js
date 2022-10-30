@@ -21,6 +21,11 @@ const setSuccessResponse = (data, res, etag, successCode=200) => {
 export const getPlan = async (req, resp) => {
     try {
        const id = `${req.params.id}`
+       const doesPlanExist = await planService.checkIfPlanExistsService(id)
+        if (!doesPlanExist) {
+            errorHandler("No plans found with the corresponding ObjectId", resp, 404)
+            return 
+        }
        const [plan, etag] = await planService.getPlanService(id)
        
        if (req.headers['if-none-match'] !== undefined && req.headers['if-none-match'] === etag) {
@@ -40,7 +45,12 @@ export const getPlan = async (req, resp) => {
 export const deletePlan = async (req, resp) => {
     try {
         const id = `${req.params.id}`
-        const [plan, etag] = await planService.getPlanService(id) 
+        const doesPlanExist = await planService.checkIfPlanExistsService(id)
+        if (!doesPlanExist) {
+            errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
+            return 
+        }
+        const etag = await planService.getPlanEtag(id)
         let isDeleted = false
         if (req.headers['if-match'] === undefined) {
             errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
