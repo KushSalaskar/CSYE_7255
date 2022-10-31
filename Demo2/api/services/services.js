@@ -1,10 +1,47 @@
 import { createClient } from "redis"
 import crypto from "crypto"
+import dotenv from "dotenv"
+import {OAuth2Client} from "google-auth-library"
 
+dotenv.config()
+
+const CLIENT_ID = process.env.CLIENT_ID
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
 
+const googleClient = new OAuth2Client(CLIENT_ID);
 const client = createClient(REDIS_PORT)
 await client.connect();
+
+export const googleIDPVerify = async (bearerToken) => {
+
+    const token = bearerToken.split(" ")[1]
+    async function verify() {
+        const ticket = await googleClient.verifyIdToken({
+            idToken: token,
+            audience: CLIENT_ID
+        });
+        const payload = ticket.getPayload();
+        return payload
+    }
+    return verify()
+
+} 
+
+export const verifyAuthorization = async (headers) => {
+    try {
+        if (headers['authorization'] === undefined || headers['authorization'] === "") {
+            return false
+        }
+
+        const authorized = await googleIDPVerify(headers['authorization'])
+        if (authorized) {
+            return true
+        }
+        return false
+    } catch (error) {
+    
+    }
+}
 
 export const createEtag = (plan) => {
     try {

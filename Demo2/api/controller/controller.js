@@ -17,26 +17,35 @@ const setSuccessResponse = (data, res, etag, successCode=200) => {
     res.json(data);
 }
 
+
 //GET Controller
 export const getPlan = async (req, resp) => {
     try {
-       const id = `${req.params.id}`
-       const doesPlanExist = await planService.checkIfPlanExistsService(id)
+        
+        const authorized = await planService.verifyAuthorization(req.headers)
+
+        if (!authorized) {
+            errorHandler("Forbidden", resp, 403)
+            return
+        }
+
+        const id = `${req.params.id}`
+        const doesPlanExist = await planService.checkIfPlanExistsService(id)
         if (!doesPlanExist) {
             errorHandler("No plans found with the corresponding ObjectId", resp, 404)
             return 
         }
-       const [plan, etag] = await planService.getPlanService(id)
+        const [plan, etag] = await planService.getPlanService(id)
        
-       if (req.headers['if-none-match'] !== undefined && req.headers['if-none-match'] === etag) {
+        if (req.headers['if-none-match'] !== undefined && req.headers['if-none-match'] === etag) {
             setSuccessResponse("Not Modified", resp, etag, 304)
             return
-       }
-       if (!plan) {
+        }
+        if (!plan) {
             errorHandler("No plans found with the corresponding ObjectId", resp, 404)
             return
-       }
-       setSuccessResponse(JSON.parse(plan), resp, etag) 
+        }
+        setSuccessResponse(JSON.parse(plan), resp, etag) 
     } catch (error) {
         errorHandler(error.message, resp)
     }
@@ -45,6 +54,11 @@ export const getPlan = async (req, resp) => {
 //DELETE Controller
 export const deletePlan = async (req, resp) => {
     try {
+        const authorized = await planService.verifyAuthorization(req.headers)
+        if (!authorized) {
+            errorHandler("Forbidden", resp, 403)
+            return
+        }
         const id = `${req.params.id}`
         const doesPlanExist = await planService.checkIfPlanExistsService(id)
         if (!doesPlanExist) {
@@ -78,6 +92,11 @@ export const deletePlan = async (req, resp) => {
 //POST Controller
 export const savePlan = async (req, resp) => {
     try{
+        const authorized = await planService.verifyAuthorization(req.headers)
+        if (!authorized) {
+            errorHandler("Forbidden", resp, 403)
+            return
+        }
         if (req.body === "{}" || JSON.stringify(req.body) === "{}") {
             errorHandler("Request body cannot be empty", resp)
             return
