@@ -17,7 +17,6 @@ const setSuccessResponse = (data, res, etag, successCode=200) => {
     res.json(data);
 }
 
-
 //GET Controller
 export const getPlan = async (req, resp) => {
     try {
