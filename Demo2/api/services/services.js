@@ -114,3 +114,14 @@ export const savePlanService = async (objectId, plan, etag) => {
         console.log(error)        
     }
 }
+
+export const patchObject = (mainObject, reqBody, k) => {
+    try {
+        for (let key in reqBody) {
+            mainObject[k][key] = reqBody[key]
+        }
+        return mainObject
+    } catch (error) {
+        console.log(error)
+    }
+}

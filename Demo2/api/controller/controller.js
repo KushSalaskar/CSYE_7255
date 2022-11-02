@@ -116,9 +116,14 @@ export const patchPlan = async (req, resp) => {
             plan = JSON.parse(plan)
             for (let key in req.body) {
                 if (typeof req.body[key] !== "string") {
-                    continue
+                    if (req.body[key] instanceof Array) {
+                        
+                    } else {
+                        plan = planService.patchObject(plan, req.body[key], key)
+                    }
+                } else {
+                    plan[key] = req.body[key]
                 }
-                plan[key] = req.body[key]
             }
         }
         const valid = ajv.validate(planSchema, plan)
