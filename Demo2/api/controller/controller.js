@@ -117,7 +117,11 @@ export const patchPlan = async (req, resp) => {
             for (let key in req.body) {
                 if (typeof req.body[key] !== "string") {
                     if (req.body[key] instanceof Array) {
-                        
+                        plan = planService.patchList(plan, req.body[key], key)
+                        if (plan === "Bad Request") {
+                            errorHandler("List objects must contain object ID", resp)
+                            return 
+                        }
                     } else {
                         plan = planService.patchObject(plan, req.body[key], key)
                     }

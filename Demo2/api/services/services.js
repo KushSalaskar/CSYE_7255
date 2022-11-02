@@ -115,6 +115,39 @@ export const savePlanService = async (objectId, plan, etag) => {
     }
 }
 
+export const patchList = (mainObject, reqBody, k) => {
+    try {
+        const hmap = new Map()
+        for (let i = 0; i < reqBody.length; i++) {
+            if (reqBody[i]["objectId"] === undefined) {
+                return "Bad Request"
+            }
+            hmap.set(reqBody[i]["objectId"], reqBody[i])
+        }
+        for (let i = 0; i < mainObject[k].length; i++) {
+            if (hmap.has(mainObject[k][i]["objectId"])) {
+                const tempObj = hmap.get(mainObject[k][i]["objectId"])
+                hmap.delete(mainObject[k][i]["objectId"])
+                for (let key in tempObj) {
+                    if (typeof tempObj[key] !== "string") {
+                        if (tempObj[key] instanceof Array) {
+                            mainObject[k][i] = patchList(mainObject[k][i], tempObj[key], key)
+                        } else {
+                            mainObject[k][i] = patchObject(mainObject[k][i], tempObj[key], key)
+                        }
+                    } else {
+                        mainObject[k][i][key] = tempObj[key]
+                    }
+                }
+            }
+        }
+        
+        return mainObject
+    } catch (error) {
+        console.log(error) 
+    }
+}
+
 export const patchObject = (mainObject, reqBody, k) => {
     try {
         for (let key in reqBody) {
