@@ -1,6 +1,7 @@
 import * as planService from "../services/services.js"
 import Ajv from "ajv"
 import { planSchema } from "../schema.js"
+import { GeoReplyWith } from "redis"
 
 const ajv = new Ajv()
 
@@ -84,8 +85,57 @@ export const deletePlan = async (req, resp) => {
         }
         setSuccessResponse(`Plan ${id} successfully deleted`, resp, 204) 
     } catch (error) {
-        console.log(error.message)
         errorHandler(error.message, resp)
+    }
+}
+
+//PATCH Controller
+export const patchPlan = async (req, resp) => {
+    try {
+        const authorized = await planService.verifyAuthorization(req.headers)
+        if (!authorized) {
+            errorHandler("Forbidden", resp, 403)
+            return
+        }
+        const id = `${req.params.id}`
+        const doesPlanExist = await planService.checkIfPlanExistsService(id)
+        if (!doesPlanExist) {
+            errorHandler("No plans found with the corresponding ObjectId to delete", resp, 404)
+            return 
+        }
+        let [plan, etag] = await planService.getPlanService(id)
+        if (req.headers['if-match'] === undefined) {
+            errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
+            return
+        }
+        if (req.headers['if-match'] !== etag) {
+            errorHandler("A requested precondition failed", resp, 412)
+            return
+        } 
+        if (req.headers['if-match'] === etag) {
+            plan = JSON.parse(plan)
+            for (let key in req.body) {
+                if (typeof req.body[key] !== "string") {
+                    continue
+                }
+                plan[key] = req.body[key]
+            }
+        }
+        const valid = ajv.validate(planSchema, plan)
+        plan = JSON.stringify(plan)
+        if (!valid) {
+            errorHandler(ajv.errors, resp)
+            return
+        }
+        etag = planService.createEtag(plan)
+        const respObjectId = await planService.savePlanService(id, plan, etag) 
+        if (respObjectId !== null){
+            setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully patched`, resp, etag, 200)
+        } else {
+            errorHandler("Something went wrong", resp)
+        } 
+    } catch (error) {
+        errorHandler(error.message, resp) 
     }
 }
 
@@ -97,7 +147,8 @@ export const savePlan = async (req, resp) => {
             errorHandler("Forbidden", resp, 403)
             return
         }
-        if (req.body === "{}" || JSON.stringify(req.body) === "{}") {
+        const plan = JSON.stringify(req.body)
+        if (req.body === "{}" || plan === "{}") {
             errorHandler("Request body cannot be empty", resp)
             return
         }
@@ -112,7 +163,6 @@ export const savePlan = async (req, resp) => {
             errorHandler(`The Plan with objectId ${objectId} already exists`, resp, 409)
             return
         }
-        const plan = JSON.stringify(req.body)
         const etag = planService.createEtag(plan)
         const respObjectId = await planService.savePlanService(objectId, plan, etag) 
         if (respObjectId !== null){

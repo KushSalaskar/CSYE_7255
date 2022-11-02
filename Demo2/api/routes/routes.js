@@ -12,4 +12,7 @@ router.route("/getPlan/:id")
 router.route("/deletePlan/:id")
     .delete(apiController.deletePlan)
 
+router.route("/patchPlan/:id")
+    .patch(apiController.patchPlan)
+
 export default router
