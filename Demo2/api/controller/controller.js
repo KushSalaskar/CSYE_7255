@@ -1,7 +1,6 @@
 import * as planService from "../services/services.js"
 import Ajv from "ajv"
 import { planSchema } from "../schema.js"
-import { GeoReplyWith } from "redis"
 
 const ajv = new Ajv()
 
