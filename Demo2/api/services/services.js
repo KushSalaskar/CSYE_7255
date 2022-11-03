@@ -141,7 +141,9 @@ export const patchList = (mainObject, reqBody, k) => {
                 }
             }
         }
-        
+        for (let [key, value] of hmap) {
+            mainObject[k].push(value)
+        }
         return mainObject
     } catch (error) {
         console.log(error) 
