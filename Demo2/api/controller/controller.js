@@ -24,7 +24,7 @@ export const getPlan = async (req, resp) => {
         const authorized = await planService.verifyAuthorization(req.headers)
 
         if (!authorized) {
-            errorHandler("Forbidden", resp, 403)
+            errorHandler("Unauthorized", resp, 401)
             return
         }
 
@@ -55,7 +55,7 @@ export const deletePlan = async (req, resp) => {
     try {
         const authorized = await planService.verifyAuthorization(req.headers)
         if (!authorized) {
-            errorHandler("Forbidden", resp, 403)
+            errorHandler("Unauthorized", resp, 401)
             return
         }
         const id = `${req.params.id}`
@@ -92,7 +92,7 @@ export const patchPlan = async (req, resp) => {
     try {
         const authorized = await planService.verifyAuthorization(req.headers)
         if (!authorized) {
-            errorHandler("Forbidden", resp, 403)
+            errorHandler("Unauthorized", resp, 401)
             return
         }
         const id = `${req.params.id}`
@@ -155,7 +155,7 @@ export const savePlan = async (req, resp) => {
     try{
         const authorized = await planService.verifyAuthorization(req.headers)
         if (!authorized) {
-            errorHandler("Forbidden", resp, 403)
+            errorHandler("Unauthorized", resp, 401)
             return
         }
         const plan = JSON.stringify(req.body)
