@@ -134,6 +134,11 @@ export const patchPlan = async (req, resp) => {
             return
         }
         const { objectId } = plan
+        const doesPlanExistNew = await planService.checkIfPlanExistsService(objectId)
+        if (objectId !== id && doesPlanExistNew) {
+            errorHandler(`The Plan with objectId ${objectId} already exists`, resp, 409)
+            return
+        }
         plan = JSON.stringify(plan)
         etag = planService.createEtag(plan)
         if (id !== objectId) {
