@@ -81,7 +81,7 @@ export const deletePlan = async (req, resp) => {
             errorHandler("Something went wrong", resp, 500)
             return
         }
-        setSuccessResponse(`Plan ${id} successfully deleted`, resp, 204) 
+        setSuccessResponse(`Plan ${id} successfully deleted`, resp, etag, 204) 
     } catch (error) {
         errorHandler(error.message, resp)
     }
