@@ -146,7 +146,7 @@ export const patchPlan = async (req, resp) => {
         }
         const respObjectId = await planService.savePlanService(objectId, plan, etag) 
         if (respObjectId !== null){
-            setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully patched`, resp, etag, 200)
+            setSuccessResponse(JSON.parse(plan), resp, etag) 
         } else {
             errorHandler("Something went wrong", resp)
         } 
