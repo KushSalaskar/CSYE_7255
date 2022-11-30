@@ -1,36 +1,16 @@
 import { createClient } from "redis"
-import { Client } from "@elastic/elasticsearch"
 import { OAuth2Client } from "google-auth-library"
 import crypto from "crypto"
 import dotenv from "dotenv"
-import fs from "fs"
 
 dotenv.config()
 
 const CLIENT_ID = process.env.CLIENT_ID
 const REDIS_PORT = process.env.REDIS_PORT || 6379
-const ES_PW = process.env.ES_PW
-const CERT_PATH = process.env.CERT_PATH
-const ES_BASE_URL = process.env.ES_BASE_URL
 
 const googleClient = new OAuth2Client(CLIENT_ID)
 const client = createClient(REDIS_PORT)
 await client.connect()
-
-const es_client = new Client({
-    node: ES_BASE_URL,
-    auth: {
-        username: 'elastic',
-        password: ES_PW
-    },
-    tls: {
-        ca: fs.readFileSync(CERT_PATH + '/http_ca.crt'),
-        rejectUnauthorized: false
-    },
-    headers:{
-        "Content-type": "application/json"
-    }
-})
 
 export const googleIDPVerify = async (bearerToken) => {
 

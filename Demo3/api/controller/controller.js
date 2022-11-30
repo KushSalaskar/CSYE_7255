@@ -1,4 +1,5 @@
 import * as planService from "../services/services.js"
+import * as queueUtils from "../services/redisQueueUtils"
 import Ajv from "ajv"
 import { planSchema } from "../schema.js"
 
@@ -180,7 +181,8 @@ export const savePlan = async (req, resp) => {
             return
         }
         const etag = planService.createEtag(plan)
-        const respObjectId = await planService.savePlanService(objectId, plan, etag) 
+        const respObjectId = await planService.savePlanService(objectId, plan, etag)
+        const pushToMQ = await queueUtils.appendToPrimaryQueue(plan)
         if (respObjectId !== null){
             setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully added`, resp, etag, 201)
         } else {
