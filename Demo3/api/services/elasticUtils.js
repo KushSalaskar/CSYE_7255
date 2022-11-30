@@ -1,7 +1,6 @@
-import * as queueUtils from "./redisQueueUtils"
+import * as queueUtils from "./redisQueueUtils.js"
 import fs from "fs"
 import { Client } from "@elastic/elasticsearch"
-import {client} from "./services"
 import dotenv from "dotenv"
 
 dotenv.config()
@@ -27,10 +26,11 @@ const es_client = new Client({
 
 //Testing es
 
-const listening = async() => {
+export const listening = async() => {
     let queue_size = 0
+    console.log("HERREEEE")
     try{
-      const size = await client.LLEN("primaryQueue");
+      const size = await queueUtils.client.LLEN("primaryQueue");
       queue_size = size;
     } catch(err){
         console.log("Error getting queue size",err);
@@ -46,9 +46,3 @@ const listening = async() => {
       console.log(elastic_result)
     }
   }
-  
-  while (true) {
-    await listening();
-  }
-
-//testing es

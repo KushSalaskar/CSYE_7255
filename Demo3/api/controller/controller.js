@@ -1,5 +1,5 @@
 import * as planService from "../services/services.js"
-import * as queueUtils from "../services/redisQueueUtils"
+import * as queueUtils from "../services/redisQueueUtils.js"
 import Ajv from "ajv"
 import { planSchema } from "../schema.js"
 
