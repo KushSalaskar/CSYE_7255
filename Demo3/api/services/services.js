@@ -160,3 +160,5 @@ export const patchObject = (mainObject, reqBody, k) => {
         console.log(error)
     }
 }
+
+export {client}

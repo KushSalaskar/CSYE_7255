@@ -1,17 +1,12 @@
-import { createClient } from "redis"
 import * as esUtils from "./elasticUtils.js"
-
-const REDIS_PORT = process.env.REDIS_PORT || 6379
-
-const client = createClient(REDIS_PORT)
-await client.connect()
+import {client} from "./services.js"
 
 export const appendToPrimaryQueue = async (msg) => {
     try {
         const appended = await client.LPUSH("primaryQueue", msg)
-        if (appended) {
-            esUtils.listening()
-        }
+        // if (appended) {
+        //     esUtils.listening()
+        // }
         return appended
     } catch (error) {
         console.log(error)
@@ -35,5 +30,3 @@ export const popFromSecondaryQueue = async () => {
         console.log(error)
     }
 }
-
-export {client}

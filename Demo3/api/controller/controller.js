@@ -2,6 +2,9 @@ import * as planService from "../services/services.js"
 import * as queueUtils from "../services/redisQueueUtils.js"
 import Ajv from "ajv"
 import { planSchema } from "../schema.js"
+import dotenv from "dotenv"
+
+dotenv.config()
 
 const ajv = new Ajv()
 
