@@ -18,13 +18,8 @@ const es_client = new Client({
     tls: {
         ca: fs.readFileSync(CERT_PATH + '/http_ca.crt'),
         rejectUnauthorized: false
-    },
-    headers:{
-        "Content-type": "application/json"
     }
 })
-
-//Testing es
 
 export const listening = async() => {
     let queue_size = 0
