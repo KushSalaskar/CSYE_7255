@@ -95,26 +95,72 @@ const createIndexMapping = async () => {
 }
 
 export const listening = async () => {
-    let queue_size = 0
-    try{
-      const size = await client.LLEN("primaryQueue")
-      queue_size = size;
-    } catch(err){
-        console.log("Initializing")
-    }
-    if(queue_size > 0){
-      const data = await queueUtils.popFromPrimaryQueue()
-      const parsed_data = parentChildSplit("root", JSON.parse(data), {}, "plan")
-      try{
-        const elastic_result = await es_client.index({
-            index: 'plan',
-            id: parsed_data["objectId"],
-            body: parsed_data
-          })
-          console.log(elastic_result)
-      } catch(err){
+    
+    let q_size = 0
 
+    try {
+      q_size = await client.LLEN("primaryQueue")
+    } catch (error) {
+      console.log("Queue Empty")
+    }
+
+    if(q_size > 0) {
+      try {
+        const data = await queueUtils.popFromPrimaryQueue()
+        const mappedJson = parentChildSplit("root", JSON.parse(data), {}, "plan")
+        for (let objectId in mappedJson) {
+          const mappingKey = mappedJson[objectId]["__mappingKey__"]
+          const parentId = mappedJson[objectId]["__parent__"] === "root" ? "" : mappedJson[objectId]["__parent__"] 
+          const es_fragment = mappedJson[objectId]
+          delete es_fragment[mappingKey]
+          delete es_fragment[parentId]
+
+          if (mappingKey === "plan") {
+            es_fragment["mapping"] = "plan"
+          } else if (mappingKey === "planserviceCostShares") {
+            es_fragment["mapping"] = {
+              name: "planserviceCostShares",
+              parent: parentId
+            } 
+          } else if(mappingKey == "linkedService"){
+            es_fragment["mapping"] = {
+                name: "linkedService",
+                parent: parentId 
+              }
+          } else if (mappingKey == "planCostShares"){
+              es_fragment["mapping"] = {
+                name: "planCostShares",
+                parent: parentId
+              }
+          }else if (mappingKey == "linkedPlanServices"){
+            es_fragment["mapping"] = {
+                name: "linkedPlanServices",
+                parent: parentId
+              }
+          }else if (mappingKey == "planCostShares"){
+            es_fragment["mapping"] = {
+                name: "planCostShares",
+                parent: parentId
+              }
+          } else if(mappingKey == null) {
+            es_fragment["mapping"] = "plan"
+          }
+
+          const es_result = await es_client.index({
+            index: 'plan',
+            id: objectId,
+            routing: parentId,
+            document: es_fragment
+          })
+          console.log(es_result)
+        }
+
+        const removeFromQueue = await queueUtils.popFromSecondaryQueue()
+
+      } catch (error) {
+        console.log(error)
       }
+  
     }
   }
 
