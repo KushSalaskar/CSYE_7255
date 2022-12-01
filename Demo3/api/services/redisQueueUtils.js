@@ -1,12 +1,8 @@
-import * as esUtils from "./elasticUtils.js"
 import {client} from "./services.js"
 
 export const appendToPrimaryQueue = async (msg) => {
     try {
         const appended = await client.LPUSH("primaryQueue", msg)
-        // if (appended) {
-        //     esUtils.listening()
-        // }
         return appended
     } catch (error) {
         console.log(error)

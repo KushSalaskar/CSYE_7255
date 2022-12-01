@@ -15,8 +15,6 @@ const ES_PW = process.env.ES_PW || "jHgl*weBUCMJ05sTvOa4"
 const CERT_PATH = process.env.CERT_PATH || "/Users/kushsalaskar/Desktop/CSYE_7255/elasticsearch-8.5.2/config/certs"
 const ES_BASE_URL = process.env.ES_BASE_URL || "https://localhost:9200"
 
-console.log(ES_PW, CERT_PATH, ES_BASE_URL)
-
 const es_client = new Client({
     node: ES_BASE_URL,
     auth: {
@@ -29,27 +27,97 @@ const es_client = new Client({
     }
 })
 
-export const listening = async() => {
+const parentChildSplit = (parentId, data, parentChildMappingDict) => {
+    if (data === undefined) {
+        return parentChildMappingDict
+    }
+    let objectId = ""
+    if (data["objectId"] !== undefined || data["objectId"] !== null) {
+        objectId = data["objectId"]
+        parentChildMappingDict[objectId] = {}
+        for (let key in data) {
+            if (typeof data[key] !== "object") {
+                parentChildMappingDict[objectId][key] = data[key]
+                delete data[key]
+            }
+        }
+        parentChildMappingDict[objectId]["__parent__"] = parentId
+    }
+    for (let key in data) {
+        if (typeof data[key] === "object" && !(data[key] instanceof Array)) {
+            parentChildSplit(objectId, data[key], parentChildMappingDict)
+            delete data[key]
+        } else {
+            for (let obj in data[key]) {
+                parentChildSplit(objectId, data[key][obj], parentChildMappingDict)
+            }
+        }
+    }
+    return parentChildMappingDict
+}
+
+const createIndexMapping = async () => {
+    try {
+        const deleted = await es_client.indices.delete({
+            index: "plan"
+        })
+    } catch (error) {
+        console.log("Plan mapping did not exist:", error)
+    }
+
+    try {
+        const createMapping = await es_client.indices.create({
+            index: 'plan',
+            settings: {
+              index: {
+                number_of_shards: 1,
+                number_of_replicas: 1
+              }
+            },
+            body: {
+              mappings: {
+                properties: {
+                  mapping: {
+                    type: 'join',
+                    relations: {
+                        plan: ["planCostShares", "linkedPlanServices"],
+                        linkedPlanServices: ["linkedService", "planserviceCostShares"]
+                      }
+                    }
+                  }
+                }
+            }
+        })
+    } catch (error) {
+       console.log("Error creating mapping:", error) 
+    }
+}
+
+export const listening = async () => {
     let queue_size = 0
     try{
-      const size = await client.LLEN("primaryQueue");
+      const size = await client.LLEN("primaryQueue")
       queue_size = size;
     } catch(err){
-        console.log("Initializing");
+        console.log("Initializing")
     }
     if(queue_size > 0){
-      console.log("Queue size: ",queue_size);
-      const data = await queueUtils.popFromPrimaryQueue();
-      const parsed_data = JSON.parse(data);
-      const elastic_result = await es_client.index({
-        index: 'plan',
-        id: parsed_data["objectId"],
-        body: parsed_data
-      })
-      console.log(elastic_result)
+      const data = await queueUtils.popFromPrimaryQueue()
+      const parsed_data = parentChildSplit("root", JSON.parse(data), {})
+      try{
+        const elastic_result = await es_client.index({
+            index: 'plan',
+            id: parsed_data["objectId"],
+            body: parsed_data
+          })
+          console.log(elastic_result)
+      } catch(err){
+
+      }
     }
   }
 
+  await createIndexMapping()
   while(true){
     await listening()
   }
