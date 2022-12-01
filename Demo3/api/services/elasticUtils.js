@@ -27,7 +27,7 @@ const es_client = new Client({
     }
 })
 
-const parentChildSplit = (parentId, data, parentChildMappingDict) => {
+const parentChildSplit = (parentId, data, parentChildMappingDict, keyVal) => {
     if (data === undefined) {
         return parentChildMappingDict
     }
@@ -42,14 +42,15 @@ const parentChildSplit = (parentId, data, parentChildMappingDict) => {
             }
         }
         parentChildMappingDict[objectId]["__parent__"] = parentId
+        parentChildMappingDict[objectId]["__mappingKey__"] = keyVal
     }
     for (let key in data) {
         if (typeof data[key] === "object" && !(data[key] instanceof Array)) {
-            parentChildSplit(objectId, data[key], parentChildMappingDict)
+            parentChildSplit(objectId, data[key], parentChildMappingDict, key)
             delete data[key]
         } else {
             for (let obj in data[key]) {
-                parentChildSplit(objectId, data[key][obj], parentChildMappingDict)
+                parentChildSplit(objectId, data[key][obj], parentChildMappingDict, key)
             }
         }
     }
@@ -103,7 +104,7 @@ export const listening = async () => {
     }
     if(queue_size > 0){
       const data = await queueUtils.popFromPrimaryQueue()
-      const parsed_data = parentChildSplit("root", JSON.parse(data), {})
+      const parsed_data = parentChildSplit("root", JSON.parse(data), {}, "plan")
       try{
         const elastic_result = await es_client.index({
             index: 'plan',
