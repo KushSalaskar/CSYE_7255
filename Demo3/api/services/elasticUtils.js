@@ -108,7 +108,6 @@ export const listening = async () => {
       try {
         const data = await queueUtils.popFromPrimaryQueue()
         const mappedJson = parentChildSplit("root", JSON.parse(data), {}, "plan")
-        console.log(mappedJson)
         for (let objectId in mappedJson) {
           const mappingKey = mappedJson[objectId]["__mappingKey__"]
           const parentId = mappedJson[objectId]["__parent__"] === "root" ? "" : mappedJson[objectId]["__parent__"] 
