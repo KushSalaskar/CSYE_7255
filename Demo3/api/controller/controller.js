@@ -69,6 +69,7 @@ export const deletePlan = async (req, resp) => {
             return 
         }
         const etag = await planService.getPlanEtag(id)
+        const [plan, etag_nouse] = await planService.getPlanService(id)
         let isDeleted = false
         if (req.headers['if-match'] === undefined) {
             errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
@@ -85,8 +86,12 @@ export const deletePlan = async (req, resp) => {
             errorHandler("Something went wrong", resp, 500)
             return
         }
+        
+        await queueUtils.appendToPrimaryDeleteQueue(plan)
+
         setSuccessResponse(`Plan ${id} successfully deleted`, resp, etag, 204) 
     } catch (error) {
+        console.log(error)
         errorHandler(error.message, resp)
     }
 }
@@ -106,6 +111,7 @@ export const patchPlan = async (req, resp) => {
             return 
         }
         let [plan, etag] = await planService.getPlanService(id)
+        const planToDelete = plan
         if (req.headers['if-match'] === undefined) {
             errorHandler("Precondition required. Try using \"If-Match\"", resp, 428)
             return
@@ -148,7 +154,9 @@ export const patchPlan = async (req, resp) => {
         if (id !== objectId) {
             await planService.deletePlanService(id) 
         }
-        const respObjectId = await planService.savePlanService(objectId, plan, etag) 
+        await queueUtils.appendToPrimaryDeleteQueue(planToDelete)
+        const respObjectId = await planService.savePlanService(objectId, plan, etag)
+        await queueUtils.appendToPrimaryQueue(plan)
         if (respObjectId !== null){
             setSuccessResponse(JSON.parse(plan), resp, etag) 
         } else {
@@ -185,7 +193,7 @@ export const savePlan = async (req, resp) => {
         }
         const etag = planService.createEtag(plan)
         const respObjectId = await planService.savePlanService(objectId, plan, etag)
-        const pushToMQ = await queueUtils.appendToPrimaryQueue(plan)
+        await queueUtils.appendToPrimaryQueue(plan)
         if (respObjectId !== null){
             setSuccessResponse(`Plan with ObjectId - ${respObjectId} successfully added`, resp, etag, 201)
         } else {

@@ -108,12 +108,13 @@ export const listening = async () => {
       try {
         const data = await queueUtils.popFromPrimaryQueue()
         const mappedJson = parentChildSplit("root", JSON.parse(data), {}, "plan")
+        console.log(mappedJson)
         for (let objectId in mappedJson) {
           const mappingKey = mappedJson[objectId]["__mappingKey__"]
           const parentId = mappedJson[objectId]["__parent__"] === "root" ? "" : mappedJson[objectId]["__parent__"] 
           const es_fragment = mappedJson[objectId]
-          delete es_fragment[mappingKey]
-          delete es_fragment[parentId]
+          delete es_fragment["__mappingKey__"]
+          delete es_fragment["__parent__"]
 
           if (mappingKey === "plan") {
             es_fragment["mapping"] = "plan"
@@ -155,7 +156,7 @@ export const listening = async () => {
           console.log(es_result)
         }
 
-        const removeFromQueue = await queueUtils.popFromSecondaryQueue()
+        await queueUtils.popFromSecondaryQueue()
 
       } catch (error) {
         console.log(error)
@@ -164,7 +165,37 @@ export const listening = async () => {
     }
   }
 
+  export const deleteListener = async () => {
+    let q_size = 0
+
+    try {
+      q_size = await client.LLEN("primaryDeleteQueue")
+    } catch (error) {
+      console.log("Queue Empty")
+    }
+
+    if (q_size > 0) {
+      try {
+        const data = await queueUtils.popFromPrimaryDeleteQueue()
+        const mappedJson = parentChildSplit("root", JSON.parse(data), {}, "plan")
+        for (let objectId in mappedJson) {
+          const es_delete = await es_client.delete({
+            index: 'plan',
+            id: objectId 
+          })
+          console.log(es_delete)
+        }
+
+        await queueUtils.popFromSecondaryDeleteQueue()
+
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  }
+
   await createIndexMapping()
   while(true){
     await listening()
+    await deleteListener()
   }
